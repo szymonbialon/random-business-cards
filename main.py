@@ -13,10 +13,14 @@ class BaseContact:
 
     @property
     def full_name_length(self):
-        return len(self.first_name) + len(self.last_name)
+        return len("{self.first_name} {self.last_name}")
+
+    @property
+    def contact_phone(self):
+        return self.private_phone
 
     def contact(self):
-        print(f'Wybieram numer {self.format_phone(self.private_phone)} i dzwonię do {self.first_name} {self.last_name}')
+        print(f'Wybieram numer {self.format_phone(self.contact_phone)} i dzwonię do {self.first_name} {self.last_name}')
 
     @staticmethod
     def format_phone(phone):
@@ -31,34 +35,38 @@ class BusinessContact(BaseContact):
         self.work_phone = work_phone
 
     def __str__(self):
-        return (f'{self.first_name} {self.last_name} - {self.job_title} at {self.company_name} '
-                f'Email: {self.email} - Private Phone: {self.format_phone(self.private_phone)} - Work Phone: {self.format_phone(self.work_phone)}')
+        contact = super().__str__()    
+        contact += f" work phone: {self.format_phone(self.work_phone)}"
+        return contact
+
 
     @property
-    def full_name_length(self):
-        return len(self.first_name) + len(self.last_name)
-
-    def contact(self):
-        print(f'Wybieram numer {self.format_phone(self.work_phone)} i dzwonię do {self.first_name} {self.last_name}')
-
+    def contact_phone()
+        return self.work_phoe
 
 def generate_phone_number():
     return ''.join([str(Faker().random_int(min=0, max=9)) for _ in range(9)])
 
 
 def create_contact(contact_type, fake):
-    first_name = fake.first_name()
-    last_name = fake.last_name()
-    private_phone = generate_phone_number()
-    email = fake.email()
+    
+    data = dict(
+        first_name = fake.first_name(),
+        last_name = fake.last_name(),
+        private_phone = generate_phone_number(),
+        email = fake.email()
+    )
+
 
     if contact_type == "base":
-        return BaseContact(first_name, last_name, private_phone, email)
+        return BaseContact(**data)
     elif contact_type == "business":
-        job_title = fake.job()
-        company_name = fake.company()
-        work_phone = generate_phone_number()
-        return BusinessContact(first_name, last_name, private_phone, email, job_title, company_name, work_phone)
+        worker_data = {
+            job_title = fake.job(),
+            company_name = fake.company(),
+            work_phone = generate_phone_number(),
+        }
+        return BusinessContact(**data, **worker_data)
 
 
 def create_contacts(contact_type, count):
