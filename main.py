@@ -1,6 +1,5 @@
 from faker import Faker
 
-
 class BaseContact:
     def __init__(self, first_name, last_name, private_phone, email):
         self.first_name = first_name
@@ -13,14 +12,39 @@ class BaseContact:
 
     @property
     def full_name_length(self):
-        return len(self.first_name) + len(self.last_name)
+        return len(f"{self.first_name} {self.last_name}")
+
+    @property
+    def contact_phone(self):
+        return self.private_phone
 
     def contact(self):
-        print(f'Wybieram numer {self.format_phone(self.private_phone)} i dzwonię do {self.first_name} {self.last_name}')
+        print(f'Wybieram numer {self.format_phone(self.contact_phone)} i dzwonię do {self.first_name} {self.last_name}')
 
     @staticmethod
     def format_phone(phone):
         return f'+48 {phone[:3]} {phone[3:6]} {phone[6:]}'
+
+    @staticmethod
+    def generate_phone_number():
+        return ''.join([str(Faker().random_int(min=0, max=9)) for _ in range(9)])
+
+    @classmethod
+    def generate_contact(cls, fake, business=False):
+        phone = cls.generate_phone_number()
+        contact_data = {
+            'first_name': fake.first_name(),
+            'last_name': fake.last_name(),
+            'private_phone': phone,
+            'email': fake.email()
+        }
+        if business:
+            contact_data.update({
+                'job_title': fake.job(),
+                'company_name': fake.company(),
+                'work_phone': cls.generate_phone_number()
+            })
+        return contact_data
 
 
 class BusinessContact(BaseContact):
@@ -31,34 +55,21 @@ class BusinessContact(BaseContact):
         self.work_phone = work_phone
 
     def __str__(self):
-        return (f'{self.first_name} {self.last_name} - {self.job_title} at {self.company_name} '
-                f'Email: {self.email} - Private Phone: {self.format_phone(self.private_phone)} - Work Phone: {self.format_phone(self.work_phone)}')
+        contact = super().__str__()
+        contact += f" | Zatrudnienie: {self.job_title}, Firma: {self.company_name}, " \
+                   f"Telefon służbowy: {self.format_phone(self.work_phone)}"
+        return contact
 
     @property
-    def full_name_length(self):
-        return len(self.first_name) + len(self.last_name)
-
-    def contact(self):
-        print(f'Wybieram numer {self.format_phone(self.work_phone)} i dzwonię do {self.first_name} {self.last_name}')
-
-
-def generate_phone_number():
-    return ''.join([str(Faker().random_int(min=0, max=9)) for _ in range(9)])
+    def contact_phone(self):
+        return self.work_phone
 
 
 def create_contact(contact_type, fake):
-    first_name = fake.first_name()
-    last_name = fake.last_name()
-    private_phone = generate_phone_number()
-    email = fake.email()
-
-    if contact_type == "base":
-        return BaseContact(first_name, last_name, private_phone, email)
-    elif contact_type == "business":
-        job_title = fake.job()
-        company_name = fake.company()
-        work_phone = generate_phone_number()
-        return BusinessContact(first_name, last_name, private_phone, email, job_title, company_name, work_phone)
+    data = BaseContact.generate_contact(fake, business=(contact_type == "business"))
+    if contact_type == "business":
+        return BusinessContact(**data)
+    return BaseContact(**data)
 
 
 def create_contacts(contact_type, count):
@@ -80,4 +91,3 @@ for contact in business_contacts:
     print(contact)
     contact.contact()
     print(f'Długość pełnego imienia i nazwiska: {contact.full_name_length} znaków.')
-    
